@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "us-east-1"
+    ECR_REPOSITORY: "azuos-api"
+    CONTAINER_NAME: "azuos-api"
+
+phases:
+  pre_build:
+    commands:
+      - echo "Verificando variáveis de ambiente da AWS..."
+      - test -n "$AWS_ACCOUNT_ID" || { echo "AWS_ACCOUNT_ID é obrigatório"; exit 1; }
+      - aws --version
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+
+  build:
+    commands:
+      - echo "Construindo imagem Docker para a API..."
+      - docker build -t "$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION" .
+      - docker tag "$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - printf '{"name":"%s","imageUri":"%s"}' "$CONTAINER_NAME" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imagedefinitions.json
+      - cp taskdef.json taskdef-rendered.json
+      - sed -i.bak "s|__IMAGE_URI__|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION|g; s|__CONTAINER_NAME__|$CONTAINER_NAME|g" taskdef-rendered.json
+
+  post_build:
+    commands:
+      - echo "Build concluído e imagem publicada no ECR."
+      - ls -l
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - taskdef-rendered.json
+    - appspec.yaml
