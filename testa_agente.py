@@ -10,17 +10,17 @@ APP_NAME = "azuos_compliance_beta"
 USER_ID = "u_2"
 SESSION_ID = "s_2"
 
-print(f"🔄 Conectando em: {AGENT_URL}")
+print(f" Conectando em: {AGENT_URL}")
 
 # 1. CRIAR SESSÃO
 session_url = f"{AGENT_URL}/apps/{APP_NAME}/users/{USER_ID}/sessions/{SESSION_ID}"
 try:
-    print("\n1️⃣ Criando Sessão...")
+    print("\n Criando Sessão...")
     resp_session = requests.post(session_url)
     resp_session.raise_for_status()
-    print("✅ Sessão criada com sucesso!")
+    print(" Sessão criada com sucesso!")
 except Exception as e:
-    print(f"❌ Erro ao criar sessão: {e}")
+    print(f" Erro ao criar sessão: {e}")
     # Dependendo da API, ela pode nem precisar criar sessão primeiro, então continuamos
 
 # 2. MANDAR A MSG (O RUN)
@@ -54,13 +54,13 @@ print("\n2️⃣ Enviando mensagem para a IA...")
 try:
     resp_run = requests.post(run_url, json=payload)
     resp_run.raise_for_status()
-    print("✅ Sucesso! Resposta da IA:")
+    print(" Sucesso! Resposta da IA:")
     
     # Imprime o JSON de resposta formatado bonitinho no terminal
     print("\n" + "="*40)
     print(json.dumps(resp_run.json(), indent=2, ensure_ascii=False))
     print("="*40)
 except Exception as e:
-    print(f"❌ Erro na execução: {e}")
+    print(f" Erro na execução: {e}")
     if 'resp_run' in locals():
         print(f"Retorno cru: {resp_run.text}")
